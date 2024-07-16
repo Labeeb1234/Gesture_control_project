@@ -42,7 +42,7 @@ def read_pgm(pgm_fp):
 
 data = read_pgm(r'C:\Users\labee\path_planning\map\playground.pgm')
 image_data = np.reshape(data[0], data[1])
-
+print(image_data)
 map_height, map_width = image_data.shape # map cell sizes
 print(f"map height: {map_height}, map_width: {map_width}")
 
@@ -57,9 +57,10 @@ plt.plot(origin_x, origin_y, 'rx')
 plt.show()
 
 # dimensions of the pgm map image
-
-
+map_originX = -10.3 # in [m]
+map_originY = -10.5 # in [m]
 cell_resolution = 0.05 # [m/cell]
+
 x_coords = np.zeros_like(image_data, dtype=float)
 y_coords = np.zeros_like(image_data, dtype=float)
 
@@ -71,7 +72,9 @@ for my in range(map_height):
 # finding the obstacle coordinates
 occupied_thresh = 0.65
 free_thresh = 0.25
-count=0
+
+
+
 data_dic = {}
 for row_data in image_data:
     for data in row_data:
@@ -88,15 +91,18 @@ obstacle_spaces_world = []
 for my in range(map_height):
     for mx in range(map_width):
         pixel_point = image_data[my, mx]
-        if pixel_point == 254:
+        pixel_thresh = (255-pixel_point)/255
+        if pixel_thresh <= free_thresh and pixel_point != 205:
             wx, wy = map_to_world_frames(mx, my, cell_resolution, 0.0, -10.3, -10.5)
             free_spaces_world.append((wx, wy))
-        elif pixel_point == 205:
-            wx, wy = map_to_world_frames(mx, my, cell_resolution, 0.0, -10.3, -10.5)
-            outside_spaces_world.append((wx, wy))
-        elif pixel_point == 0:
+        elif pixel_thresh >= occupied_thresh:
             wx, wy = map_to_world_frames(mx, my, cell_resolution, 0.0, -10.3, -10.5)
             obstacle_spaces_world.append((wx, wy))
+        if pixel_point == 205:
+            pixel_thresh = -1
+            if pixel_thresh == -1:
+                wx, wy = map_to_world_frames(mx, my, cell_resolution, 0.0, -10.3, -10.5)
+                outside_spaces_world.append((wx, wy))
 
 
         
@@ -117,9 +123,11 @@ cmap = plt.cm.gray
 cmap.set_bad(color='red')
 plt.imshow(image_data, cmap=cmap, vmin=0, vmax=255)
 #plt.scatter([msx], [msy], color='red')  # Plot the selected point in red
-plt.scatter(free_mx_coords, free_my_coords, color='blue', s=1)  # Plot the free spaces in blue
-#plt.scatter(outside_mx_coords, outside_my_coords, color='red', s=1)  # Plot the outside spaces in red
-plt.scatter(obstacle_mx_coords, obstacle_my_coords, color='green', s=1)  # Plot the obstacle spaces in red
+#plt.scatter(free_mx_coords, free_my_coords, color='blue', s=1)  # Plot the free spaces in blue
+plt.scatter(outside_mx_coords, outside_my_coords, color='green', s=1)  # Plot the outside spaces in red
+#plt.scatter(obstacle_mx_coords, obstacle_my_coords, color='red', s=1)  # Plot the obstacle spaces in red
 plt.title("PGM Map Data")
 plt.show()
+
+
 
